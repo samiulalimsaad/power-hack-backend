@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { BillModel } from "./Models/Billing.Model.js";
 import {
     BillValidationSchema,
+    LoginValidationSchema,
     SignUpValidationSchema,
 } from "./utils/validationSchema.js";
 
@@ -35,6 +36,34 @@ app.post("/api/registration", async (req, res) => {
             token,
             success: true,
         });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.errors?.length ? error.errors : error.message,
+        });
+    }
+});
+
+app.post("/api/login", async (req, res) => {
+    try {
+        const data = LoginValidationSchema.validateSync(req.body, {
+            abortEarly: true,
+        });
+
+        const user = await UserModel.findOne({ email: data.email });
+        console.log(user);
+
+        if (bcrypt.compareSync(data.password, user.password)) {
+            const token = jwt.sign(req.body, process.env.ACCESS_TOKEN, {
+                expiresIn: "1d",
+            });
+            res.json({
+                token,
+                success: true,
+            });
+        } else {
+            throw new Error("invalid Credential");
+        }
     } catch (error) {
         res.json({
             success: false,
