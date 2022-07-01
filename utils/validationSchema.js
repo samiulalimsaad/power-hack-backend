@@ -16,11 +16,11 @@ export const SignUpValidationSchema = Yup.object({
         .required("Enter your password required"),
 });
 
-export const BillingFormValidationSchema = Yup.object({
-    fullName: Yup.string().required("Name is required"),
+export const BillValidationSchema = Yup.object({
+    fullName: Yup.string().required("Full Name is required"),
     email: Yup.string()
         .email("Enter a valid email")
         .required("Email is required"),
     phone: Yup.string().required("Phone Number is required"),
-    paidAmount: Yup.string().required("amount is required"),
+    paidAmount: Yup.string().required("Paid Amount is required"),
 });
