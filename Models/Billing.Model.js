@@ -1,4 +1,5 @@
-import { model, Schema } from "mongoose";
+import mongoose from "mongoose";
+const { model, Schema } = mongoose
 
 // Create a Schema corresponding to the document interface.
 const BillingSchema = new Schema(
@@ -12,4 +13,4 @@ const BillingSchema = new Schema(
 );
 
 // Create a Model.
-export const Bill = model("Order", BillingSchema);
+export const BillModel = model("Bill", BillingSchema);
