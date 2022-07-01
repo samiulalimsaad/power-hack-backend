@@ -15,7 +15,32 @@ import { UserModel } from "./Models/User.Model.js";
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 5000;
-const SALT = bcrypt.genSaltSync(10);
+
+const verifyUser = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({
+            success: false,
+            message: "unauthorized access",
+        });
+    }
+    const token = authHeader.split(" ")[1];
+
+    try {
+        await jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+            if (err) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Only admin has access",
+                });
+            }
+            req.email = decoded?.email;
+            next();
+        });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+};
 
 app.post("/api/registration", async (req, res) => {
     try {
@@ -23,7 +48,7 @@ app.post("/api/registration", async (req, res) => {
             abortEarly: true,
         });
 
-        const password = bcrypt.hashSync("B4c0//", SALT);
+        const password = bcrypt.hashSync(data.password, 10);
         data.password = password;
 
         const newUser = new UserModel(data);
@@ -51,7 +76,11 @@ app.post("/api/login", async (req, res) => {
         });
 
         const user = await UserModel.findOne({ email: data.email });
-        console.log(user);
+        console.log(data.password, user.password);
+
+        console.log(
+            await bcrypt.compareSync(data.password.toString(), user.password)
+        );
 
         if (bcrypt.compareSync(data.password, user.password)) {
             const token = jwt.sign(req.body, process.env.ACCESS_TOKEN, {
@@ -72,10 +101,10 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
-app.get("/api/billing-list", async (req, res) => {
+app.get("/api/billing-list", verifyUser, async (req, res) => {
     try {
-        console.log(req.query.email);
-        const bills = await BillModel.find({ email: req.query.email });
+        // const bills = await BillModel.find({ email: req.query.email });
+        const bills = await BillModel.find({});
         console.log(bills);
         res.status(200).json({ success: true, bills });
     } catch (error) {
@@ -83,7 +112,7 @@ app.get("/api/billing-list", async (req, res) => {
     }
 });
 
-app.post("/api/add-billing", async (req, res) => {
+app.post("/api/add-billing", verifyUser, async (req, res) => {
     try {
         const data = BillValidationSchema.validateSync(req.body, {
             abortEarly: false,
@@ -96,7 +125,7 @@ app.post("/api/add-billing", async (req, res) => {
     }
 });
 
-app.patch("/api/update-billing/:id", async (req, res) => {
+app.patch("/api/update-billing/:id", verifyUser, async (req, res) => {
     try {
         const bill = await BillModel.findByIdAndUpdate(
             req.params.id,
@@ -111,7 +140,7 @@ app.patch("/api/update-billing/:id", async (req, res) => {
     }
 });
 
-app.delete("/api/delete-billing/:id", async (req, res) => {
+app.delete("/api/delete-billing/:id", verifyUser, async (req, res) => {
     try {
         const bill = await BillModel.findByIdAndDelete(req.params.id);
         res.status(200).json({ success: true, bill });
