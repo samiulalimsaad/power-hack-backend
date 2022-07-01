@@ -149,6 +149,10 @@ app.delete("/api/delete-billing/:id", verifyUser, async (req, res) => {
     }
 });
 
+app.get("/", async (req, res) => {
+    res.status(200).json({ success: true, message: "OK" });
+});
+
 app.listen(PORT, () => {
     console.log(`server is running at http://localhost:${PORT}`);
     mongoose.connect(
