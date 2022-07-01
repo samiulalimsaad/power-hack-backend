@@ -37,9 +37,13 @@ app.post("/api/add-billing", async (req, res) => {
 
 app.patch("/api/update-billing/:id", async (req, res) => {
     try {
-        const bill = BillModel.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-        });
+        const bill = await BillModel.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            {
+                new: true,
+            }
+        );
         res.status(200).json({ success: true, bill });
     } catch (error) {
         res.status(502).json({ success: false, message: error.message });
@@ -48,7 +52,7 @@ app.patch("/api/update-billing/:id", async (req, res) => {
 
 app.delete("/api/delete-billing/:id", async (req, res) => {
     try {
-        const bill = BillModel.findByIdAndDelete(req.params.id);
+        const bill = await BillModel.findByIdAndDelete(req.params.id);
         res.status(200).json({ success: true, bill });
     } catch (error) {
         res.status(502).json({ success: false, message: error.message });
