@@ -2,14 +2,46 @@ import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 import { BillModel } from "./Models/Billing.Model.js";
-import { BillValidationSchema } from "./utils/validationSchema.js";
+import {
+    BillValidationSchema,
+    SignUpValidationSchema,
+} from "./utils/validationSchema.js";
+
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { UserModel } from "./Models/User.Model.js";
 
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 5000;
+const SALT = bcrypt.genSaltSync(10);
 
-app.post("/api/registration");
-app.post("/api/login");
+app.post("/api/registration", async (req, res) => {
+    try {
+        const data = SignUpValidationSchema.validateSync(req.body, {
+            abortEarly: true,
+        });
+
+        const password = bcrypt.hashSync("B4c0//", SALT);
+        data.password = password;
+
+        const newUser = new UserModel(data);
+        const user = await newUser.save();
+
+        const token = jwt.sign(req.body, process.env.ACCESS_TOKEN, {
+            expiresIn: "1d",
+        });
+        res.json({
+            token,
+            success: true,
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.errors?.length ? error.errors : error.message,
+        });
+    }
+});
 
 app.get("/api/billing-list", async (req, res) => {
     try {
@@ -65,6 +97,7 @@ app.listen(PORT, () => {
         process.env.DATABASE_URL,
         {
             useNewUrlParser: true,
+            autoIndex: true, //make this also true
         },
         () => {
             console.log("Database is connected");
